@@ -2,9 +2,9 @@ name: Sync upstream
 
 on:
   schedule:
-    # GitHub 使用 UTC；每月 1 日 18:00 UTC 即北京时间次日 02:00。
-    # 可按需替换为任意合法 cron，例如每周一 18:00 UTC："0 18 * * 1"。
-    - cron: "0 18 1 * *"
+    # GitHub 使用 UTC；每周一 18:00 UTC 即北京时间每周二 02:00。
+    # 可按需替换为任意合法 cron，例如每周日 18:00 UTC："0 18 * * 0"。
+    - cron: "0 18 * * 1"
   workflow_dispatch:
     inputs:
       upstream_branch:
