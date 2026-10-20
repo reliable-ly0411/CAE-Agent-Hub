@@ -1,6 +1,7 @@
 name: FEP Agent Hub test
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - "MCP/FEP-Agent-Hub/**"
