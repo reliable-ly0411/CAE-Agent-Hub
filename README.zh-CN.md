@@ -26,10 +26,10 @@
 <a href="docs/simulation-atlas.md#frame">案例与来源 →</a>
 </td>
 <td width="50%" valign="top">
-<a href="assets/readme/cantilever-result.png"><img src="assets/readme/cantilever-result.png" width="100%" alt="Workbench / Mechanical · 悬臂梁" loading="lazy"></a><br>
-<strong>Workbench / Mechanical · 悬臂梁</strong><br>
-100 N静力载荷；最大总变形0.79651 mm。<br>
-<a href="docs/simulation-atlas.md#cantilever">案例与来源 →</a>
+<a href="assets/readme/mechanical-clevis-deformation.png"><img src="assets/readme/mechanical-clevis-deformation.png" width="100%" alt="Workbench / Mechanical · 耳板销轴接触" loading="lazy"></a><br>
+<strong>Workbench / Mechanical · 耳板销轴接触</strong><br>
+30 kN静力接触；M3总变形云图，三档网格位移对比。<br>
+<a href="docs/simulation-atlas.md#mechanical-clevis">案例与来源 →</a>
 </td>
 </tr>
 <tr>
@@ -54,10 +54,10 @@ Re≈498；细网格全管静压降2.93381 Pa。<br>
 <a href="docs/simulation-atlas.md#maxwell">案例与来源 →</a>
 </td>
 <td width="50%" valign="top">
-<a href="assets/readme/cst-sparameters.png"><img src="assets/readme/cst-sparameters.png" width="100%" alt="CST · 电路S参数" loading="lazy"></a><br>
-<strong>CST · 电路S参数</strong><br>
-Design Studio实际S21结果，覆盖1–10 GHz。<br>
-<a href="docs/simulation-atlas.md#cst">案例与来源 →</a>
+<a href="assets/readme/cst-radar77-field.png"><img src="assets/readme/cst-radar77-field.png" width="100%" alt="CST · 77 GHz雷达阵列电场" loading="lazy"></a><br>
+<strong>CST · 77 GHz雷达阵列电场</strong><br>
+端口1激励；原生电场幅值云图（V/m），时域六面体求解。<br>
+<a href="docs/simulation-atlas.md#cst-radar77">案例与来源 →</a>
 </td>
 </tr>
 <tr>
@@ -68,18 +68,10 @@ Design Studio实际S21结果，覆盖1–10 GHz。<br>
 <a href="docs/simulation-atlas.md#bracket-hex">案例与来源 →</a>
 </td>
 <td width="50%" valign="top">
-<a href="assets/readme/optistruct-beam--P05_Stress_VonMises.png"><img src="assets/readme/optistruct-beam--P05_Stress_VonMises.png" width="100%" alt="HyperWorks · 三维梁应力" loading="lazy"></a><br>
-<strong>HyperWorks · 三维梁应力</strong><br>
-OptiStruct求解、HyperView后处理；日志确认计算完成。<br>
-<a href="docs/simulation-atlas.md#optistruct-beam">案例与来源 →</a>
-</td>
-</tr>
-<tr>
-<td width="50%" valign="top">
-<a href="assets/readme/fep-transient.png"><img src="assets/readme/fep-transient.png" width="100%" alt="FEP · 瞬态热传导" loading="lazy"></a><br>
-<strong>FEP · 瞬态热传导</strong><br>
-FreeCAD → Elmer → ParaView；20个真实物理时间步。<br>
-<a href="docs/simulation-atlas.md#fep-transient">案例与来源 →</a>
+<a href="assets/readme/radioss-cylinder-impact.png"><img src="assets/readme/radioss-cylinder-impact.png" width="100%" alt="HyperWorks / Radioss · 圆柱冲击钢板" loading="lazy"></a><br>
+<strong>HyperWorks / Radioss · 圆柱冲击钢板</strong><br>
+0.12 ms末帧Mises应力（GPa）；能量误差与适用范围见案例。<br>
+<a href="docs/simulation-atlas.md#radioss-cylinder">案例与来源 →</a>
 </td>
 </tr>
 </table>
@@ -217,18 +209,6 @@ npm.cmd run dev
 
 ```text
 http://127.0.0.1:4178/
-```
-
-示例案例：
-
-```text
-http://127.0.0.1:4178/?case=cantilever
-http://127.0.0.1:4178/?case=hole-plate
-http://127.0.0.1:4178/?case=hole-plate-modal
-http://127.0.0.1:4178/?case=sphere-impact
-http://127.0.0.1:4178/?case=milling-3d
-http://127.0.0.1:4178/?case=gear-mesh
-http://127.0.0.1:4178/?case=bullet-plate
 ```
 
 ### Agentic PD 真实结果回放
