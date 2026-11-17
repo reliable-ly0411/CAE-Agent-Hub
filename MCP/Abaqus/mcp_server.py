@@ -18,6 +18,13 @@ import os
 import asyncio
 
 from mcp.server.fastmcp import FastMCP
+from mcp.types import CallToolResult, TextContent
+
+from odb_history import history_query
+from part_mesh import mesh_query
+
+
+from job_files import inspect_job_files as _inspect_job_files
 
 
 DEFAULT_HOST = os.environ.get("ABAQUS_MCP_HOST", "127.0.0.1")
@@ -301,6 +308,26 @@ result = {
 
 
 @mcp.tool()
+async def inspect_part_mesh(
+    model_name: str,
+    part_name: str,
+    analysis_checks: bool = False,
+    label_limit: int = 20,
+    timeout: float | None = None,
+) -> dict[str, Any]:
+    """Read part mesh counts, element types, seed size and optional Abaqus analysis checks.
+
+    Uses the named model and part in the open CAE session. Does not remesh,
+    create sets or submit a job. Quality checks do not establish convergence.
+    """
+    reply = await run_python(mesh_query(model_name, part_name, analysis_checks, label_limit), timeout)
+    result = reply.get("return_value")
+    if not isinstance(result, dict):
+        raise ProtocolError("Abaqus mesh query did not return an object")
+    return result
+
+
+@mcp.tool()
 async def list_jobs(timeout: float | None = None) -> str:
     """List all Abaqus jobs in the current CAE session."""
     code = r"""
@@ -340,6 +367,28 @@ job.waitForCompletion()
 result = {"success": True, "job": job_name, "status": str(getattr(job, "status", "UNKNOWN"))}
 """.replace("__JOB_NAME__", json.dumps(job_name.strip()))
     return _json_string((await run_python(code, timeout or 3600.0)).get("return_value"))
+
+
+@mcp.tool()
+async def inspect_job_files(
+    job_name: str,
+    job_directory: str,
+    encoding: str = "utf-8-sig",
+    tail_lines: int = 8,
+    diagnostic_limit: int = 12,
+) -> dict[str, Any]:
+    """Read local .sta/.msg/.dat/.log without a live CAE connection.
+
+    job_directory must be an existing absolute path on the MCP server host,
+    including for CLI jobs absent from mdb.jobs. Data-check completion differs
+    from analysis completion. Read errors and lock-file evidence are explicit;
+    file state is not proof of a running process or engineering acceptance.
+    Use encoding='gb18030' for logs written with that encoding.
+    """
+    return await asyncio.to_thread(
+        _inspect_job_files, job_name, job_directory, encoding=encoding,
+        tail_lines=tail_lines, diagnostic_limit=diagnostic_limit,
+    )
 
 
 @mcp.tool()
@@ -451,10 +500,10 @@ try:
                     })
             except Exception:
                 pass
-            try:
-                history_outputs = list(step.historyRegions.keys())
-            except Exception:
-                pass
+        try:
+            history_outputs = list(step.historyRegions.keys())
+        except Exception:
+            pass
 
         steps.append({
             "name": step_name,
@@ -478,6 +527,34 @@ finally:
         odb.close()
 """.replace("__ODB_PATH__", json.dumps(odb_path.strip()))
     return (await run_python(code, timeout or 120.0)).get("return_value")
+
+
+@mcp.tool()
+async def read_odb_history(
+    odb_path: str,
+    step_name: str,
+    region_name: str,
+    variable: str,
+    offset: int = 0,
+    limit: int = 1000,
+    timeout: float | None = None,
+) -> CallToolResult:
+    """Read one real-valued history output from an ODB on the Abaqus/CAE host.
+
+    Supply an absolute path and exact step, region, and variable names.
+    Returns original [x, value] pairs in stored order and the Abaqus step domain.
+    Use next_offset to continue the same series. A null next_offset marks the
+    end of the data currently in the ODB. At most 10,000 points per call.
+    """
+    try:
+        code = history_query(odb_path, step_name, region_name, variable, offset, limit)
+        page = (await run_python(code, timeout or 120.0))["return_value"]
+    except (ValueError, RuntimeError) as exc:
+        return CallToolResult(isError=True, content=[TextContent(type="text", text=str(exc))])
+    return CallToolResult(
+        content=[TextContent(type="text", text=_json_string(page))],
+        structuredContent=page,
+    )
 
 
 @mcp.tool()

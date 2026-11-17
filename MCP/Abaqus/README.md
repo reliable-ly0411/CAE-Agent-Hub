@@ -111,10 +111,13 @@ Set `ABAQUS_MCP_HOME=<repo>`, restart Abaqus/CAE, then start the bridge from the
 - `execute_script`: compatibility wrapper around `run_python`.
 - `set_workdir`: change Abaqus working directory before creating jobs.
 - `get_model_info`: inspect models, parts, sets, surfaces, jobs, and viewports.
+- `inspect_part_mesh`: inspect counts, element types, global seed size, and optional element checks for a named part.
 - `list_jobs`: list jobs in the current CAE session.
 - `submit_job`: submit an existing job and wait for completion.
 - `monitor_job_status`: list jobs or tail `.sta`/`.msg` diagnostics.
+- `inspect_job_files`: inspect local job logs from an explicit directory without contacting the CAE session.
 - `inspect_odb`: inspect ODB metadata and available outputs.
+- `read_odb_history`: read original data points for one history variable, with pagination.
 - `get_odb_info`: compatibility wrapper around `inspect_odb`.
 - `capture_viewport`: capture viewport image as structured base64 data.
 - `get_viewport_image`: compatibility wrapper returning a data URI.
@@ -124,6 +127,45 @@ Resources:
 - `abaqus://status`
 - `abaqus://session-telemetry`
 - `abaqus://agent-instructions`
+
+### Inspect job files without a CAE session
+
+Call `inspect_job_files` with a job name and an existing absolute directory on
+the MCP server, for example `job_name="Example"` and
+`job_directory="C:/analysis/example"`. The tool reads that job's
+`.sta`, `.msg`, `.dat`, and `.log`, so it also works for jobs launched
+from the command line. Pass `encoding="gb18030"` for files written in that
+encoding. The response reports a bounded tail, diagnostic messages, file
+read errors, and the evidence for distinguishing a data check from a
+completed analysis. An Explicit success footer at increment zero is not\naccepted as full analysis completion. A lock file or an incomplete log alone cannot establish
+that the solver is still running.
+
+### Read history output from an ODB
+
+Call `inspect_odb` to find the step and history region names. Then call
+`read_odb_history` with the exact names and an absolute ODB path on the machine
+running Abaqus/CAE:
+
+```json
+{
+  "odb_path": "C:/analysis/cantilever.odb",
+  "step_name": "Load",
+  "region_name": "Node BEAM-1.1",
+  "variable": "RF1",
+  "limit": 1000
+}
+```
+
+The tool opens the ODB read-only. It returns original `[x, value]` pairs in
+`points`, plus `domain`, `total_points`, `offset`, and `next_offset`. The
+domain comes from Abaqus (for example, `TIME` uses **step time**, and
+`FREQUENCY` uses frequency). The tool preserves the stored values and order.
+Pass `next_offset` as `offset` to retrieve the next page with the same selection.
+A null `next_offset` means there are no more recorded points. For repeatable
+paging, use an unchanged ODB. The default page is 1,000 points, with a maximum
+of 10,000. Missing step, region, or variable names return an error with a sample
+of available names. Complex histories and non-finite values are reported as
+errors. Use `inspect_job_files` separately to check analysis completion.
 
 ## Recommended Workflow
 
@@ -141,3 +183,16 @@ The socket dispatcher and GUI-thread execution model are inspired by `Whfkl/Abaq
 ## Notes
 
 This project requires a licensed Abaqus/CAE installation on the user's machine. It does not include Abaqus binaries, analysis results, ODB files, or private local configuration.
+## Inspecting a part mesh
+
+`inspect_part_mesh(model_name, part_name, analysis_checks=false, label_limit=20)`
+reads a named part in the current CAE session. It returns element and node
+counts, an element type breakdown, and the global seed size in the model's
+length units. No seed is reported for an orphan mesh. A zero seed on a
+native part means a global size was not assigned.
+
+Set `analysis_checks=true` to run Abaqus's element checks and retrieve warning,
+failure and not-applicable counts with a bounded sample of element labels.
+An empty mesh is reported separately. The tool leaves parts and jobs
+unchanged. Use it to record each mesh before running a comparison; element
+checks cannot by themselves establish mesh convergence.
